@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { CustomersModule } from './customers/customers.module.js';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CustomersModule } from './customers/customers.module.js';
+import { InvoicesModule } from './invoices/invoices.module.js';
 
 @Module({
   imports: [
-    CustomersModule,
-    ConfigModule.forRoot({isGlobal: true}),
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -15,11 +15,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         url: configService.getOrThrow<string>('DATABASE_URL'),
         autoLoadEntities: true,
         synchronize: false,
-        ssl: true
-      })
-    })
+        ssl: true,
+      }),
+    }),
+    CustomersModule,
+    InvoicesModule,
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}
