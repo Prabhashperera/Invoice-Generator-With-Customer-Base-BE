@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomersModule } from './customers/customers.module.js';
 import { InvoicesModule } from './invoices/invoices.module.js';
+import { ProductsModule } from './products/products.module.js';
 
 @Module({
   imports: [
@@ -15,10 +16,10 @@ import { InvoicesModule } from './invoices/invoices.module.js';
         url: configService.getOrThrow<string>('DATABASE_URL'),
         autoLoadEntities: true,
         synchronize: false,
-        ssl: true,
       }),
     }),
     CustomersModule,
+    ProductsModule,
     InvoicesModule,
   ],
 })
