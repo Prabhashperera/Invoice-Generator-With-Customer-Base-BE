@@ -9,10 +9,12 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { CustomersService } from './customers.service.js';
 import { CreateCustomerDto } from './dto/create-customer.dto.js';
 import { UpdateCustomerDto } from './dto/update-customer.dto.js';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto.js';
 
 @Controller('customers')
 export class CustomersController {
@@ -23,10 +25,10 @@ export class CustomersController {
     return this.customersService.create(createCustomerDto);
   }
 
-  @Get()
-  findAll() {
-    return this.customersService.findAll();
-  }
+  // @Get()
+  // findAll() {
+  //   return this.customersService.findAll();
+  // }
 
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
@@ -45,5 +47,10 @@ export class CustomersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.customersService.remove(id);
+  }
+
+  @Get()
+  findAll(@Query() query: PaginationQueryDto) {
+    return this.customersService.findAll(query);
   }
 }

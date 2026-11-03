@@ -9,10 +9,13 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
+  StreamableFile,
 } from '@nestjs/common';
 import { InvoicesService } from './invoices.service.js';
 import { CreateInvoiceDto } from './dto/create-invoice.dto.js';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto.js';
+import { InvoiceQueryDto } from './dto/invoice-query.dto.js';
 
 @Controller('invoices')
 export class InvoicesController {
@@ -24,9 +27,10 @@ export class InvoicesController {
   }
 
   @Get()
-  findAll() {
-    return this.invoicesService.findAll();
+  findAll(@Query() query: InvoiceQueryDto) {
+    return this.invoicesService.findAll(query);
   }
+
 
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {

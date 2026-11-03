@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, FindOptionsWhere, ILike, Repository } from 'typeorm';
 import { fromCents, toCents } from '../common/money.js';
 import { CustomersService } from '../customers/customers.service.js';
 import { ProductsService } from '../products/products.service.js';
@@ -9,6 +9,8 @@ import { InvoiceItem } from './entities/invoice-item.entity.js';
 import { CreateInvoiceDto } from './dto/create-invoice.dto.js';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto.js';
 import { InvoiceItemInputDto } from './dto/invoice-item-input.dto.js';
+import { Paginated, likePattern, paginated } from '../common/pagination.js';
+import { InvoiceQueryDto } from './dto/invoice-query.dto.js';
 
 @Injectable()
 export class InvoicesService {
@@ -45,13 +47,6 @@ export class InvoicesService {
     return this.findOne(invoiceId);
   }
 
-  findAll(): Promise<Invoice[]> {
-    return this.invoicesRepository.find({
-      relations: { customer: true, items: true },
-      order: { createdAt: 'DESC', items: { position: 'ASC' } },
-    });
-  }
-
   async findOne(id: string): Promise<Invoice> {
     const invoice = await this.invoicesRepository.findOne({
       where: { id },
@@ -62,6 +57,27 @@ export class InvoicesService {
       throw new NotFoundException(`Invoice with id ${id} was not found`);
     }
     return invoice;
+  }
+
+  async findAll(query: InvoiceQueryDto): Promise<Paginated<Invoice>> {
+    const { page, limit, search, customerId } = query;
+    const base: FindOptionsWhere<Invoice> = customerId ? { customerId } : {};
+    const pattern = search ? likePattern(search) : null;
+    const where: FindOptionsWhere<Invoice>[] = pattern
+      ? [
+          { ...base, invoiceNumber: ILike(pattern) },
+          { ...base, customer: { name: ILike(pattern) } },
+        ]
+      : [base];
+
+    const [data, total] = await this.invoicesRepository.findAndCount({
+      where,
+      relations: { customer: true, items: true },
+      order: { createdAt: 'DESC', id: 'ASC', items: { position: 'ASC' } },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return paginated(data, total, page, limit);
   }
 
   async update(

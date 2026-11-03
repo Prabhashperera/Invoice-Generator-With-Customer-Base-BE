@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { ILike, In, Repository } from 'typeorm';
 import { Product } from './entities/product.entity.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto.js';
+import { Paginated, likePattern, paginated } from '../common/pagination.js';
 
 @Injectable()
 export class ProductsService {
@@ -17,9 +19,9 @@ export class ProductsService {
     return this.productsRepository.save(product);
   }
 
-  findAll(): Promise<Product[]> {
-    return this.productsRepository.find({ order: { name: 'ASC' } });
-  }
+  // findAll(): Promise<Product[]> {
+  //   return this.productsRepository.find({ order: { name: 'ASC' } });
+  // }
 
   async findOne(id: string): Promise<Product> {
     const product = await this.productsRepository.findOneBy({ id });
@@ -45,5 +47,16 @@ export class ProductsService {
   async remove(id: string): Promise<void> {
     const product = await this.findOne(id);
     await this.productsRepository.remove(product);
+  }
+
+  async findAll(query: PaginationQueryDto): Promise<Paginated<Product>> {
+    const { page, limit, search } = query;
+    const [data, total] = await this.productsRepository.findAndCount({
+      where: search ? { name: ILike(likePattern(search)) } : undefined,
+      order: { name: 'ASC', id: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return paginated(data, total, page, limit);
   }
 }

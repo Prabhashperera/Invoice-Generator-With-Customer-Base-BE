@@ -8,6 +8,10 @@ import { QueryFailedError, Repository } from 'typeorm';
 import { Customer } from './entities/customer.entity.js';
 import { CreateCustomerDto } from './dto/create-customer.dto.js';
 import { UpdateCustomerDto } from './dto/update-customer.dto.js';
+import { ILike } from 'typeorm';
+import { likePattern, paginated, type Paginated } from '../common/pagination.js';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto.js';
+
 
 const PG_FOREIGN_KEY_VIOLATION = '23503';
 
@@ -23,9 +27,9 @@ export class CustomersService {
     return this.customersRepository.save(customer);
   }
 
-  findAll(): Promise<Customer[]> {
-    return this.customersRepository.find({ order: { createdAt: 'DESC' } });
-  }
+  // findAll(): Promise<Customer[]> {
+  //   return this.customersRepository.find({ order: { createdAt: 'DESC' } });
+  // }
 
   async findOne(id: string): Promise<Customer> {
     const customer = await this.customersRepository.findOneBy({ id });
@@ -60,5 +64,19 @@ export class CustomersService {
       }
       throw error;
     }
+  }
+
+  async findAll(query: PaginationQueryDto): Promise<Paginated<Customer>> {
+    const { page, limit, search } = query;
+    const pattern = search ? likePattern(search) : null;
+    const [data, total] = await this.customersRepository.findAndCount({
+      where: pattern
+        ? [{ name: ILike(pattern) }, { mobile: ILike(pattern) }]
+        : undefined,
+      order: { createdAt: 'DESC', id: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return paginated(data, total, page, limit);
   }
 }
