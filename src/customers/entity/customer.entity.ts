@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Customer {
@@ -10,5 +10,8 @@ export class Customer {
 
     @Column()
     cust_Mobile: number
+
+    @CreateDateColumn({type: 'timestamptz'})
+    created_At: Date
 
 }
